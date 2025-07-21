@@ -48,7 +48,7 @@ app.get('/projects' , authMiddleware ,async(req , res) =>{
     })
     
     res.json({projects})
-})
+});
 
 app.listen(port , ()=>{
     console.log(`Your app is listening on port ${port}`)
