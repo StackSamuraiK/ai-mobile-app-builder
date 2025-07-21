@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Project" ALTER COLUMN "userId" SET DATA TYPE TEXT;
