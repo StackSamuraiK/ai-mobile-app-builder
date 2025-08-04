@@ -3,51 +3,110 @@ export class ArtifactProcessor {
     private onFileContent: (filePath: string, fileContent: string) => void;
     private onShellCommand: (shellCommand: string) => void;
 
-    constructor(currentArtifact: string, onFileContent: (filePath: string, fileContent: string) => void, onShellCommand: (shellCommand: string) => void) {
+    constructor(
+        currentArtifact: string, 
+        onFileContent: (filePath: string, fileContent: string) => void, 
+        onShellCommand: (shellCommand: string) => void
+    ) {
         this.currentArtifact = currentArtifact;
         this.onFileContent = onFileContent;
         this.onShellCommand = onShellCommand;
     }
 
-    append(artifact: string) {
+    append(artifact: string): void {
         this.currentArtifact += artifact;
     }
 
-    parse() {
-       const latestActionStart = this.currentArtifact.split("\n").findIndex((line) => line.includes("<boltAction type="));
-       const latestActionEnd = this.currentArtifact.split("\n").findIndex((line) => line.includes("</boltAction>")) ?? (this.currentArtifact.split("\n").length - 1);
+    parse(): void {
+        const lines = this.currentArtifact.split("\n");
+        
+        const latestActionStart = lines.findIndex((line) => line.includes("<boltAction type="));
+        const latestActionEnd = lines.findIndex((line) => line.includes("</boltAction>"));
 
-       if (latestActionStart === -1) {
-        return;
-       }
+        if (latestActionStart === -1) {
+            return;
+        }
 
-       //@ts-ignore
-       const latestActionType = this.currentArtifact.split("\n")[latestActionStart].split("type=")[1].split(" ")[0].split(">")[0];
-       const latestActionContent = this.currentArtifact.split("\n").slice(latestActionStart, latestActionEnd + 1).join("\n");
+        // Use the actual end index or default to last line
+        const actionEndIndex = latestActionEnd !== -1 ? latestActionEnd : lines.length - 1;
 
-       try {
-       if (latestActionType === "\"shell\"") {
-        let shellCommand = latestActionContent.split('\n').slice(1).join('\n');
+        try {
+            const actionStartLine = lines[latestActionStart];
+            if (!actionStartLine) {
+                return;
+            }
+
+            // Extract action type more safely
+            const typeMatch = actionStartLine.match(/type=["']?([^"'\s>]+)["']?/);
+            if (!typeMatch) {
+                return;
+            }
+
+            const latestActionType = typeMatch[1];
+            const latestActionContent = lines.slice(latestActionStart, actionEndIndex + 1).join("\n");
+
+            if (latestActionType === "shell") {
+                this.handleShellAction(latestActionContent);
+            } else if (latestActionType === "file") {
+                this.handleFileAction(actionStartLine, latestActionContent);
+            }
+        } catch (error) {
+            console.error('Error parsing artifact:', error);
+        }
+    }
+
+    private handleShellAction(latestActionContent: string): void {
+        const contentLines = latestActionContent.split('\n');
+        if (contentLines.length < 2) {
+            return;
+        }
+
+        let shellCommand = contentLines.slice(1).join('\n');
+        
         if (shellCommand.includes("</boltAction>")) {
-            //@ts-ignore
-            shellCommand = shellCommand.split("</boltAction>")[0] ;
-            //@ts-ignore
-            this.currentArtifact = this.currentArtifact.split(latestActionContent)[1];
+            const closingTagIndex = shellCommand.indexOf("</boltAction>");
+            shellCommand = shellCommand.substring(0, closingTagIndex);
+            
+            // Remove the processed action from currentArtifact
+            const actionIndex = this.currentArtifact.indexOf(latestActionContent);
+            if (actionIndex !== -1) {
+                const afterAction = this.currentArtifact.substring(actionIndex + latestActionContent.length);
+                this.currentArtifact = afterAction;
+            }
+            
             this.onShellCommand(shellCommand);
         }
-       } else if (latestActionType === "\"file\"") {
-        //@ts-ignore
-        const filePath = this.currentArtifact.split("\n")[latestActionStart].split("filePath=")[1].split(">")[0]
-        let fileContent = latestActionContent.split("\n").slice(1).join("\n");
-        if (fileContent.includes("</boltAction>")) {
-            //@ts-ignore
-            fileContent = fileContent.split("</boltAction>")[0] ;
-            //@ts-ignore
-            this.currentArtifact = this.currentArtifact.split(latestActionContent)[1];
-            //@ts-ignore
-            this.onFileContent(filePath.split("\"")[1], fileContent);
+    }
+
+    private handleFileAction(actionStartLine: string, latestActionContent: string): void {
+        // Extract file path more safely
+        const filePathMatch = actionStartLine.match(/filePath=["']?([^"'\s>]+)["']?/);
+        if (!filePathMatch) {
+            return;
         }
-       }
-    } catch(e) {}
+
+        const filePath = filePathMatch[1];
+        const contentLines = latestActionContent.split("\n");
+        
+        if (contentLines.length < 2) {
+            return;
+        }
+
+        let fileContent = contentLines.slice(1).join("\n");
+        
+        if (fileContent.includes("</boltAction>")) {
+            const closingTagIndex = fileContent.indexOf("</boltAction>");
+            fileContent = fileContent.substring(0, closingTagIndex);
+            
+            // Remove the processed action from currentArtifact
+            const actionIndex = this.currentArtifact.indexOf(latestActionContent);
+            if (actionIndex !== -1) {
+                const afterAction = this.currentArtifact.substring(actionIndex + latestActionContent.length);
+                this.currentArtifact = afterAction;
+            }
+            
+            //@ts-ignore
+            this.onFileContent(filePath, fileContent);
+        }
     }
 }

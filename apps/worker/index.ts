@@ -4,10 +4,14 @@ import cors from "cors"
 import type { Request, Response } from "express";
 import { prismaClient } from "db/client";
 import { systemPrompt } from "./systemPrompt";
+import { ArtifactProcessor } from "./parser";
+import { onFileUpdate, onShellCommand } from "./os";
 
 const app = express();
 
 app.use(cors());
+app.use(express.json());
+
 
 app.post('/prompt', async (req: Request, res: Response) => {
     const { prompt, projectId } = req.body
@@ -36,16 +40,9 @@ app.post('/prompt', async (req: Request, res: Response) => {
     }));
 
 
-    //May cause problem -> will be used later 
+    
+    let artifactProcessor = new ArtifactProcessor("" , onFileUpdate , onShellCommand)
     let artifact = '';
-    let artifactProcessor = {
-        append: (text: string) => {
-            artifact += text;
-        },
-        parse: () => {
-            console.log('Processing artifact:', artifact);
-        }
-    };
 
     try {
         const response = await client.models.generateContentStream({
