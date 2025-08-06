@@ -12,9 +12,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
 app.post('/prompt', async (req: Request, res: Response) => {
-    const { prompt, projectId } = req.body
+    const { prompt, projectId, projectType = "REACT_NATIVE" } = req.body; // Added projectType with default
     const client = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
     await prismaClient.prompt.create({
@@ -34,28 +33,28 @@ app.post('/prompt', async (req: Request, res: Response) => {
         }
     })
 
+    // Convert database prompts to proper Gemini format
     const convertedMessages = allPrompts.map((p) => ({
         role: p.type === "USER" ? "user" : "model",
         parts: [{ text: p.content }]
     }));
 
+    // FIXED: Call systemPrompt as a function with projectType parameter
+    const contents = [
+        {
+            role: "user",
+            parts: [{ text: systemPrompt(projectType as "REACT" | "NEXTJS" | "REACT_NATIVE") }]
+        },
+        ...convertedMessages
+    ];
 
-    
-    let artifactProcessor = new ArtifactProcessor("" , onFileUpdate , onShellCommand)
+    let artifactProcessor = new ArtifactProcessor("", onFileUpdate, onShellCommand)
     let artifact = '';
 
     try {
         const response = await client.models.generateContentStream({
-            model: "gemini-2.5-flash",
-            //@ts-ignore
-            contents: {
-                role: "user",
-                parts: [
-                    //@ts-ignore
-                    ...convertedMessages.map(msg => ({ text: msg.parts[0].text })),
-                    {text:systemPrompt}
-                ]
-            },
+            model: "gemini-2.0-flash-exp",
+            contents: contents,
             config: {
                 maxOutputTokens: 8000,
                 temperature: 0.7,
@@ -81,9 +80,15 @@ app.post('/prompt', async (req: Request, res: Response) => {
             },
         });
 
+        // Send the artifact in response
+        res.json({ response: artifact });
+
     } catch (error) {
         console.error('Error with Gemini API:', error);
+        res.status(500).json({ error: 'Failed to generate response' });
     }
+});
 
-    res.json({ response })
+app.listen(9000, () => {
+    console.log(`Your worker is listening at 9000`)
 })
