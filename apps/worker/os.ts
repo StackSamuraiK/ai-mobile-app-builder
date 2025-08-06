@@ -6,6 +6,7 @@ if(!Bun.file(BASE_WORK_DIR).exists()){
 
 export async function onFileUpdate(filePath:string , fileContent:string){
     await Bun.write(`${BASE_WORK_DIR}/${filePath}` , fileContent);
+    console.log(filePath +":"+ fileContent)
 }
 
 export async function onShellCommand(shellCommand: string){
