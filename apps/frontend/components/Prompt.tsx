@@ -28,6 +28,7 @@ export function Prompt() {
                         }
                     })
                     router.push(`/project/${response.data.projectId}`)
+                    console.log(response.data.projectId)
                 }}>
                     <Send />
                 </Button>
