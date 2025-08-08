@@ -1,17 +1,19 @@
 "use client"
 
-import { WORKER_URL } from "@/config";
+import { WORKER_API_URL, WORKER_URL } from "@/config";
 import { MessageCircle, Code, Play, Settings, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Appbar } from "@/components/Appbar";
 import { usePrompt } from "@/hooks/usePrompt";
 import { useAction } from "@/hooks/useActions";
+import axios from "axios";
 
 export default function ProjectPage({ params }: { params: { projectId: string } }) {
     const [isChatCollapsed, setIsChatCollapsed] = useState(false);
     const { prompts } = usePrompt(params.projectId);
     const { action } = useAction(params.projectId)
+    const [prompt, setPrompt] = useState("");
 
     return (
         <div className="h-screen flex flex-col overflow-hidden bg-background">
@@ -48,11 +50,11 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
                                         Start a conversation to get help with your project
                                     </div>
                                     <div>
-                                        {action.map((action)=>{
+                                        {action.map((action) => {
                                             return (
-                                            <div key={action.id}>
-                                                {action.content}
-                                            </div>
+                                                <div key={action.id}>
+                                                    {action.content}
+                                                </div>
                                             )
                                         })}
                                     </div>
@@ -65,9 +67,19 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
                                     <input
                                         type="text"
                                         placeholder="Ask anything..."
+                                        value={prompt}
+                                        onChange={(e) => { setPrompt(e.target.value) }}
+
                                         className="flex-1 px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm bg-background text-foreground placeholder:text-muted-foreground"
                                     />
-                                    <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+                                    <button
+                                        onClick={() => {
+                                            axios.post(`${WORKER_API_URL}/prompt`, {
+                                                projectId: params.projectId,
+                                                prompts: prompt
+                                            })
+                                        }}
+                                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
                                         Send
                                     </button>
                                 </div>
