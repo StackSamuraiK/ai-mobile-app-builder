@@ -52,7 +52,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
             });
         }
 
-        req.userId = (userId);
+        req.userId = userId;
         console.log("✅ Authentication successful, proceeding...");
         next();
         

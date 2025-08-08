@@ -5,9 +5,13 @@ import { MessageCircle, Code, Play, Settings, ChevronLeft, ChevronRight } from "
 import { useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Appbar } from "@/components/Appbar";
+import { usePrompt } from "@/hooks/usePrompt";
+import { useAction } from "@/hooks/useActions";
 
 export default function ProjectPage({ params }: { params: { projectId: string } }) {
     const [isChatCollapsed, setIsChatCollapsed] = useState(false);
+    const { prompts } = usePrompt(params.projectId);
+    const { action } = useAction(params.projectId)
 
     return (
         <div className="h-screen flex flex-col overflow-hidden bg-background">
@@ -42,6 +46,15 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
                                 <div className="space-y-4">
                                     <div className="text-sm text-muted-foreground text-center">
                                         Start a conversation to get help with your project
+                                    </div>
+                                    <div>
+                                        {action.map((action)=>{
+                                            return (
+                                            <div key={action.id}>
+                                                {action.content}
+                                            </div>
+                                            )
+                                        })}
                                     </div>
                                 </div>
                             </div>
@@ -94,7 +107,7 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
                     </div>
 
                     {/* Preview Frame */}
-                    <div className="flex-1 relative min-h-0">
+                    <div className="flex-1 relative min-h-0 p-2">
                         <iframe
                             src={`${WORKER_URL}/`}
                             className="w-full h-full border-0"

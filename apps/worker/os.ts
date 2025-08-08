@@ -1,15 +1,23 @@
+import { prismaClient } from "db/client";
+
 const BASE_WORK_DIR = "/tmp/bolty-worker"
 
 if(!Bun.file(BASE_WORK_DIR).exists()){
     Bun.write(BASE_WORK_DIR , "");
 }
 
-export async function onFileUpdate(filePath:string , fileContent:string){
+export async function onFileUpdate(filePath:string , fileContent:string , projectId:string){
     await Bun.write(`${BASE_WORK_DIR}/${filePath}` , fileContent);
-    console.log(filePath +":"+ fileContent)
+
+    await prismaClient.action.create({
+        data:{
+            projectId:projectId,
+            content: `Updated file ${filePath}`
+        }
+    })
 }
 
-export async function onShellCommand(shellCommand: string){
+export async function onShellCommand(shellCommand: string , projectId:string){
    console.log(`Executing shell command: ${shellCommand}`);
    
    // Filter out empty commands
@@ -32,6 +40,13 @@ export async function onShellCommand(shellCommand: string){
            const result = Bun.spawnSync(cmdParts, {
                cwd: BASE_WORK_DIR
            });
+
+           await prismaClient.action.create({
+            data:{
+                projectId,
+                content: `Command Run ${commands}`
+            }
+           })
            
            if (result.stdout) {
                console.log(result.stdout.toString());

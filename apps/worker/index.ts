@@ -12,7 +12,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.post('/prompt', async (req: Request, res: Response) => {
+app.post('/prompt' ,async (req: Request, res: Response) => {
     const { prompt, projectId, projectType = "REACT_NATIVE" } = req.body; // Added projectType with default
     const client = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -48,7 +48,7 @@ app.post('/prompt', async (req: Request, res: Response) => {
         ...convertedMessages
     ];
 
-    let artifactProcessor = new ArtifactProcessor("", onFileUpdate, onShellCommand)
+    let artifactProcessor = new ArtifactProcessor("", (filePath ,fileContent)=>onFileUpdate(filePath , fileContent, projectId), (shellCommand)=> onShellCommand(shellCommand , projectId))
     let artifact = '';
 
     try {

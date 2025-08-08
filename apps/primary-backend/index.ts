@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv"
 import { authMiddleware } from "./middlewares";
+import type { Request , Response } from "express";
 
 dotenv.config();
 
@@ -38,6 +39,26 @@ app.post('/project' , authMiddleware ,async(req , res)=>{
         }
     });
     res.json({projectId : project.id});
+})
+
+app.get('/prompts/:projectId' , authMiddleware , async(req:Request , res:Response) => {
+    const userId = req.userId;
+    const projectId = req.params.projectId;
+
+    const prompts = await prismaClient.prompt.findMany({
+        where:{projectId}
+    })
+    res.json({prompts});
+})
+
+app.get('/action/:projectId' , authMiddleware , async(req:Request , res:Response) => {
+    const userId = req.userId;
+    const projectId = req.params.projectId;
+
+    const action = await prismaClient.action.findMany({
+        where:{projectId}
+    })
+    res.json({action})
 })
 
 app.get('/projects' , authMiddleware ,async(req , res) =>{
