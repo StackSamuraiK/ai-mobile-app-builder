@@ -1,7 +1,7 @@
 import { BACKEND_URL } from "@/config";
 import { useAuth } from "@clerk/nextjs";
 import axios from "axios";
-import { act, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Action{
     id:string,
@@ -15,7 +15,7 @@ export function useAction(projectId:string){
 
     useEffect(()=>{
         async function getAction(){
-            const token = await getToken();git status
+            const token = await getToken();
             await axios.get(`${BACKEND_URL}/action/${projectId}` ,{
                 headers:{
                     "Authorization" : `Bearer ${token}`
