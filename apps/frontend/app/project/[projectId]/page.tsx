@@ -11,9 +11,41 @@ import axios from "axios";
 
 export default function ProjectPage({ params }: { params: { projectId: string } }) {
     const [isChatCollapsed, setIsChatCollapsed] = useState(false);
-    const { prompts } = usePrompt(params.projectId);
+    const { prompt } = usePrompt(params.projectId);
     const { action } = useAction(params.projectId)
-    const [prompt, setPrompt] = useState("");
+    const [promptInput, setPromptInput] = useState(""); // Renamed for clarity
+    const [isLoading, setIsLoading] = useState(false); // Add loading state
+
+    const handleSendPrompt = async () => {
+        if (!promptInput.trim()) {
+            console.error("Prompt cannot be empty");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const response = await axios.post(`${WORKER_API_URL}/prompt`, {
+                projectId: params.projectId,
+                prompt: promptInput.trim()
+            });
+            
+            console.log("Prompt sent successfully:", response.data);
+            setPromptInput(""); // Clear the input after successful send
+            
+        } catch (error) {
+            console.error("Error sending prompt:", error);
+            // You might want to show a user-friendly error message here
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendPrompt();
+        }
+    };
 
     return (
         <div className="h-screen flex flex-col overflow-hidden bg-background">
@@ -67,20 +99,17 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
                                     <input
                                         type="text"
                                         placeholder="Ask anything..."
-                                        value={prompt}
-                                        onChange={(e) => { setPrompt(e.target.value) }}
-
-                                        className="flex-1 px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm bg-background text-foreground placeholder:text-muted-foreground"
+                                        value={promptInput}
+                                        onChange={(e) => setPromptInput(e.target.value)}
+                                        onKeyPress={handleKeyPress}
+                                        disabled={isLoading}
+                                        className="flex-1 px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm bg-background text-foreground placeholder:text-muted-foreground disabled:opacity-50"
                                     />
                                     <button
-                                        onClick={() => {
-                                            axios.post(`${WORKER_API_URL}/prompt`, {
-                                                projectId: params.projectId,
-                                                prompts: prompt
-                                            })
-                                        }}
-                                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
-                                        Send
+                                        onClick={handleSendPrompt}
+                                        disabled={isLoading || !promptInput.trim()}
+                                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                                        {isLoading ? "Sending..." : "Send"}
                                     </button>
                                 </div>
                             </div>

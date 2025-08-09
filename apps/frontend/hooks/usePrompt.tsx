@@ -11,7 +11,7 @@ interface Prompt {
 }
 
 export function usePrompt(projectId: string) {
-   const [prompts, setPrompts] = useState<Prompt[]>([])
+   const [prompt, setPrompts] = useState<Prompt[]>([])
    const { getToken } = useAuth();
 
    useEffect(() => {
@@ -32,6 +32,6 @@ export function usePrompt(projectId: string) {
    }, [])
 
    return {
-       prompts,
+       prompt:prompt,
    }
 }
