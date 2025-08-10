@@ -103,7 +103,7 @@ app.post('/prompt', async (req: Request, res: Response) => {
             model: "gemini-2.0-flash-exp",
             contents: contents,
             config: {
-                maxOutputTokens: 8000,
+                maxOutputTokens: 9000,
                 temperature: 0.7,
             },
         });

@@ -131,6 +131,7 @@ const ActionItem = ({ action }: { action: any }) => {
     );
 };
 
+
 export default function ProjectPage({ params }: { params: { projectId: string } }) {
     const [isChatCollapsed, setIsChatCollapsed] = useState(false);
     const { prompt } = usePrompt(params.projectId);
