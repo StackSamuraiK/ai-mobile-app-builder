@@ -9,10 +9,9 @@ import { usePrompt } from "@/hooks/usePrompt";
 import { useAction } from "@/hooks/useActions";
 import axios from "axios";
 
-// Helper function to determine action type and get appropriate styling
 const getActionTypeInfo = (content: string) => {
     const lowerContent = content.toLowerCase();
-    
+
     if (lowerContent.includes('npm install') || lowerContent.includes('yarn add') || lowerContent.includes('pnpm add')) {
         return {
             type: 'install',
@@ -23,7 +22,7 @@ const getActionTypeInfo = (content: string) => {
             title: 'Package Installation'
         };
     }
-    
+
     if (lowerContent.includes('creating') || lowerContent.includes('created') || lowerContent.includes('generating')) {
         return {
             type: 'create',
@@ -34,7 +33,7 @@ const getActionTypeInfo = (content: string) => {
             title: 'File Created'
         };
     }
-    
+
     if (lowerContent.includes('updating') || lowerContent.includes('updated') || lowerContent.includes('modifying')) {
         return {
             type: 'update',
@@ -45,7 +44,7 @@ const getActionTypeInfo = (content: string) => {
             title: 'File Updated'
         };
     }
-    
+
     if (lowerContent.includes('running') || lowerContent.includes('executing') || lowerContent.includes('$')) {
         return {
             type: 'command',
@@ -56,7 +55,7 @@ const getActionTypeInfo = (content: string) => {
             title: 'Command Execution'
         };
     }
-    
+
     if (lowerContent.includes('error') || lowerContent.includes('failed') || lowerContent.includes('exception')) {
         return {
             type: 'error',
@@ -67,7 +66,7 @@ const getActionTypeInfo = (content: string) => {
             title: 'Error'
         };
     }
-    
+
     if (lowerContent.includes('completed') || lowerContent.includes('success') || lowerContent.includes('done')) {
         return {
             type: 'success',
@@ -78,7 +77,7 @@ const getActionTypeInfo = (content: string) => {
             title: 'Completed'
         };
     }
-    
+
     // Default case
     return {
         type: 'info',
@@ -93,7 +92,7 @@ const getActionTypeInfo = (content: string) => {
 // Action item component
 const ActionItem = ({ action }: { action: any }) => {
     const typeInfo = getActionTypeInfo(action.content);
-    
+
     return (
         <div className={`rounded-lg border ${typeInfo.borderColor} ${typeInfo.bgColor} p-4 space-y-3 transition-all duration-200 hover:shadow-sm`}>
             <div className="flex items-center space-x-3">
@@ -121,7 +120,7 @@ const ActionItem = ({ action }: { action: any }) => {
                     )}
                 </div>
             </div>
-            
+
             <div className="bg-background/50 rounded-md p-3 border border-border/50">
                 <pre className="text-xs text-foreground whitespace-pre-wrap font-mono leading-relaxed">
                     {action.content}
@@ -136,8 +135,8 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
     const [isChatCollapsed, setIsChatCollapsed] = useState(false);
     const { prompt } = usePrompt(params.projectId);
     const { action } = useAction(params.projectId)
-    const [promptInput, setPromptInput] = useState(""); // Renamed for clarity
-    const [isLoading, setIsLoading] = useState(false); // Add loading state
+    const [promptInput, setPromptInput] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
     const chatScrollRef = useRef<HTMLDivElement>(null);
     const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
@@ -185,11 +184,11 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
                 projectId: params.projectId,
                 prompt: promptInput.trim()
             });
-            
+
             console.log("Prompt sent successfully:", response.data);
             setPromptInput(""); // Clear the input after successful send
             setShouldAutoScroll(true); // Ensure auto-scroll after sending
-            
+
         } catch (error) {
             console.error("Error sending prompt:", error);
             // You might want to show a user-friendly error message here
@@ -240,7 +239,7 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
                         <div className="flex-1 flex flex-col">
                             {/* Activity Feed */}
                             <div className="flex-1 relative">
-                                <div 
+                                <div
                                     ref={chatScrollRef}
                                     onScroll={handleScroll}
                                     className="absolute inset-0 p-4 overflow-y-auto scroll-smooth"
@@ -262,7 +261,7 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
                                                     <div className="flex-1 h-px bg-border"></div>
                                                     <span className="text-xs text-muted-foreground">{action.length} actions</span>
                                                 </div>
-                                                
+
                                                 {action.map((actionItem) => (
                                                     <ActionItem key={actionItem.id} action={actionItem} />
                                                 ))}
@@ -270,7 +269,7 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
                                         )}
                                     </div>
                                 </div>
-                                
+
                                 {/* Scroll to bottom button - only show when not auto-scrolling */}
                                 {!shouldAutoScroll && action.length > 0 && (
                                     <button
@@ -350,7 +349,7 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
                     {/* Preview Frame */}
                     <div className="flex-1 relative min-h-0 p-2">
                         <iframe
-                            src={`${WORKER_URL}/`}
+                            src={`http://localhost:8080/?folder=/tmp/bolty-worker`}
                             className="w-full h-full border-0 rounded-lg"
                             title="Project Preview"
                         />
