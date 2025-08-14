@@ -24,7 +24,7 @@ export function Appbar() {
                 </div>
                 <div className="flex flex-col">
                     <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        AppOrbit
+                        Nexus
                     </h1>
                     <p className="text-xs text-muted-foreground -mt-1">Build • Deploy • Scale</p>
                 </div>
