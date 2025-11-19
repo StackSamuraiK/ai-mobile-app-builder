@@ -12,15 +12,47 @@ import { useRouter } from "next/navigation"
 export function Prompt() {
     const [prompt, setPrompt] = useState("")
     const [isLoading, setIsLoading] = useState(false)
-    const { getToken } = useAuth();
+    const { getToken, isSignedIn, isLoaded } = useAuth();
     const router = useRouter();
+    // const { toast } = useToast(); // Uncomment if you have toast
 
     const handleSubmit = async () => {
         if (!prompt.trim()) return;
         
+        // Check if Clerk has loaded
+        if (!isLoaded) {
+            console.error('Authentication is still loading');
+            return;
+        }
+
+        // Check if user is signed in
+        if (!isSignedIn) {
+            console.error('User is not signed in');
+            // Redirect to sign in page
+            router.push('/sign-in');
+            return;
+        }
+        
         setIsLoading(true);
         try {
+            // Get the token from Clerk
             const token = await getToken();
+            
+            // Validate token exists
+            if (!token) {
+                console.error('Failed to get authentication token');
+                // toast({
+                //     title: "Authentication Error",
+                //     description: "Please sign in again",
+                //     variant: "destructive"
+                // });
+                router.push('/sign-in');
+                return;
+            }
+
+            console.log('Token obtained successfully'); // Debug log
+
+            // Create project
             const response = await axios.post(`${BACKEND_URL}/project`, {
                 prompt: prompt
             }, {
@@ -29,16 +61,28 @@ export function Prompt() {
                 }
             })
             
+            // Send prompt to worker (fire and forget)
             axios.post(`${WORKER_API_URL}/prompt`, {
                 projectId: response.data.projectId,
                 prompt: prompt
-            })
+            }).catch(err => console.error('Worker API error:', err));
             
+            // Navigate to project
             router.push(`/project/${response.data.projectId}`)
-            console.log(response.data.projectId)
+            console.log('Project created:', response.data.projectId)
         } catch (error) {
             console.error('Error creating project:', error);
-            // You might want to show an error toast here
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 401) {
+                    console.error('Unauthorized - redirecting to sign in');
+                    router.push('/sign-in');
+                }
+                // toast({
+                //     title: "Error",
+                //     description: error.response?.data?.msg || "Failed to create project",
+                //     variant: "destructive"
+                // });
+            }
         } finally {
             setIsLoading(false);
         }
@@ -57,6 +101,15 @@ export function Prompt() {
         "Make a weather dashboard with multiple city support",
         "Design a recipe sharing platform with ratings"
     ];
+
+    // Show loading state while Clerk loads
+    if (!isLoaded) {
+        return (
+            <div className="w-full max-w-4xl mx-auto flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full max-w-4xl mx-auto space-y-6">
@@ -98,14 +151,16 @@ export function Prompt() {
                                 <span>Press Ctrl+Enter to create</span>
                             </div>
                             <div className="flex items-center space-x-1">
-                                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                                <span className="text-xs text-muted-foreground">AI Ready</span>
+                                <div className={`w-2 h-2 ${isSignedIn ? 'bg-green-400' : 'bg-red-400'} rounded-full animate-pulse`}></div>
+                                <span className="text-xs text-muted-foreground">
+                                    {isSignedIn ? 'AI Ready' : 'Sign in required'}
+                                </span>
                             </div>
                         </div>
                         
                         <Button 
                             onClick={handleSubmit}
-                            disabled={!prompt.trim() || isLoading}
+                            disabled={!prompt.trim() || isLoading || !isSignedIn}
                             className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-medium px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border-0 disabled:opacity-50 disabled:transform-none disabled:shadow-lg"
                         >
                             {isLoading ? (

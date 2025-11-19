@@ -18,9 +18,6 @@ export default function Home() {
         <div>
           <Prompt/>
         </div>
-        <div className="max-w-2xl mx-auto pt-4">
-          <TemplateButtons/>
-        </div>
       </div>
     </div>
   );
